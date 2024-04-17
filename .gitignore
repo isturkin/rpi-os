@@ -50,6 +50,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+*.img
+*.list
 
 # MacOS files
 .DS_Store

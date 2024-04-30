@@ -1,5 +1,6 @@
 .global GetGpioAddress
 .global SetGpioFunction
+.global SetGpio
 
 /* according to ABI(Application Binary Interface) we use r0-r3 registries for input
    and r0-r1 registries to output */
@@ -28,4 +29,37 @@ SetGpioFunction: @ input params - pin number (0-53) and pin function (0-7)
 	ADD R2, R2, LSL #1
 	LSL R1,R2
 	STR R1,[R0]
+	POP {PC}
+	
+SetGpio:
+	pinNum .req r0 @ pinNum now is an alias for r0 register to improve readability
+	pinVal .req r1
+	
+	CMP pinNum, #53
+	MOVHI PC, LR
+	PUSH {LR}
+	MOV R2, pinNum
+	.unreq pinNum @ removes alias
+	pinNum .req R2
+	BL GetGpioAddress
+	gpioAddr .req R0
+	
+	pinBank .req R3
+	LSR pinBank,pinNum, #5
+	LSL pinBank, #2
+	ADD gpioAddr, pinBank
+	.unreq pinBank
+	
+	AND pinNum, #31
+	setBit .req R3
+	MOV setBit, #1
+	LSL setBit, pinNum
+	.unreq pinNum
+	
+	TEQ pinVal, #0
+	.unreq pinVal
+	STREQ setBit, [gpioAddr,#40]
+	STRNE setBit, [gpioAddr,#28]
+	.unreq setBit
+	.unreq gpioAddr
 	POP {PC}

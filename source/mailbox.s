@@ -23,6 +23,7 @@ MailBoxWrite:
 	
 	wait1$:
 		status .req R3
+		# address + 18 because it is and address of status field
 		LDR status,[mailbox, #0x18]
 		TST status, #0x80000000
 		.unreq status

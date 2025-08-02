@@ -1,14 +1,14 @@
 /* this file contains examples how to work with graphics processor */
 
 .global GetMailBoxBase
-.global MailBoxWrite
-.global MailBoxRead
+.global MailboxWrite
+.global MailboxRead
 
 GetMailBoxBase: 
 	LDR R0, =0x2000B880 // load mailbox address for graphics processor
 	MOV PC, LR
 	
-MailBoxWrite:
+MailboxWrite:
 	TST R0, #0b1111
 	MOVNE PC, LR
 	CMP R1, #15
@@ -37,7 +37,7 @@ MailBoxWrite:
 	.unreq mailbox
 	pop {PC}
 	
-MailBoxRead:
+MailboxRead:
 	CMP R0, #15 @ input validation
 	MOVHI PC, LR @ return if failed
 	

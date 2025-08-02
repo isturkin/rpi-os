@@ -60,7 +60,7 @@ main:
 
 	noError$:
 
-	fbInfoAddr .req r4 # write frame buffer address received from graphics processor
+	fbInfoAddr .req r4
 	mov fbInfoAddr,r0
 
 /* NEW

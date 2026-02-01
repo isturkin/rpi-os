@@ -24,4 +24,6 @@ int main(int argc, char *argv[]) {
     printf("\nProcess winner: %d", p->pid);
 
     printf("\nProcess count: %d", (*getProcessTable()).processCount);
+    printf("\nProcess count: %d", (*getProcessTable()).processes[0].pid);
+    printf("\nProcess count: %d", (*getProcessTable()).processes[1].pid);
 }

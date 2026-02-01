@@ -16,7 +16,7 @@ typedef struct process {
 #define MAX_PROCESS_COUNT 10
 
 typedef struct processTable {
-    Process *processes[MAX_PROCESS_COUNT];
+    Process processes[MAX_PROCESS_COUNT];
     int processCount;
 } ProcessTable;
 

@@ -13,7 +13,7 @@ Process *addProcess() {
     }
 
     int processPid = processTable.processCount;
-    static Process newProcess;
+    Process newProcess;
 
     newProcess.pid = processPid;
     newProcess.state = NEW;
@@ -21,10 +21,10 @@ Process *addProcess() {
 
     printf("Process priority after creation: %d\n", newProcess.priority);
 
-    processTable.processes[processPid] = &newProcess;
+    processTable.processes[processPid] = newProcess;
     processTable.processCount++;    
-    printf("Process priority after creation next: %d\n", processTable.processes[processPid]->priority);
-    return processTable.processes[processPid];
+    printf("Process priority after creation next: %d\n", processTable.processes[processPid].priority);
+    return &processTable.processes[processPid];
 }
 
 ProcessTable *getProcessTable() {

@@ -26,7 +26,7 @@ Process *scheduleNextProcess() {
 
     printf("\nTicket winner: %d", ticketWinner);
     int pidWinner = ticketsToPids[ticketWinner];
-    return ps->processes[pidWinner];
+    return &(ps->processes[pidWinner]);
 }
 
 static int random_in_range(int A, int B) {

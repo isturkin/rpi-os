@@ -4,8 +4,9 @@
 .global MailboxWrite
 .global MailboxRead
 
+// communication between CPU and GPU is happenning using "mailbox" peripheral device
 GetMailBoxBase: 
-	LDR R0, =0x2000B880 // load mailbox address for graphics processor
+	LDR R0, =0x3F00B880 // load mailbox address for graphics processor (Raspberry Pi 2. Model B)
 	MOV PC, LR
 	
 MailboxWrite:

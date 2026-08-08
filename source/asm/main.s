@@ -9,7 +9,7 @@ _start:
     add r0, #1 
     
     // 3. Отправляем в Mailbox (Write)
-    ldr r1, =0x3F00B880
+    ldr r1, =0x3F00B880 // Базовый адрес для Mailbox в Raspberry PI 2 Model B
 wait_write:
     ldr r2, [r1, #0x18]       // Читаем Status
     tst r2, #0x80000000       // Проверяем флаг Full

@@ -2,6 +2,13 @@
 
 Very simple OS example for Raspberry PI.
 
-My steps are follows:
+#### Как собрать бинарник под Raspberry PI:
 
-1. Passing through Cambridge course by OS: https://www.cl.cam.ac.uk/projects/raspberrypi/tutorials/os/index.html 
+```bash
+arm-none-eabi-as -mcpu=cortex-a7 main.s -o main.o  
+arm-none-eabi-ld -Ttext 0x8000 main.o -o main.elf
+arm-none-eabi-objcopy main.elf -O binary kernel7.img
+```
+
+
+

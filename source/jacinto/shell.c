@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "process/process.h"
 #include "scheduler/scheduler.h"
 
@@ -26,4 +29,8 @@ int main(int argc, char *argv[]) {
     printf("\nProcess count: %d", (*getProcessTable()).processCount);
     printf("\nProcess count: %d", (*getProcessTable()).processes[0].pid);
     printf("\nProcess count: %d", (*getProcessTable()).processes[1].pid);
+
+    printf("pid: %d:", getpid());
+
+    sleep(300);
 }

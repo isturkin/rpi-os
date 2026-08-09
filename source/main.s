@@ -1,97 +1,69 @@
-/*
-* .globl is a directive to our assembler, that tells it to export this symbol
-* to the elf file. Convention dictates that the symbol _start is used for the 
-* entry point, so this all has the net effect of setting the entry point here.
-* Ultimately, this is useless as the elf itself is not used in the final 
-* result, and so the entry point really doesn't matter, but it aids clarity,
-* allows simulators to run the elf, and also stops us getting a linker warning
-* about having no entry point. 
-*/
-.section .init
+.section .text
 .globl _start
 _start:
+    // 1. Получаем адрес структуры
+    ldr r0, =FrameBufferInfo
+    
+    // 2. Добавляем номер канала (1 для Framebuffer)
+    // Адрес должен быть выровнен по 16 байт, поэтому последние 4 бита свободны
+    add r0, #1 
+    
+    // 3. Отправляем в Mailbox (Write)
+    ldr r1, =0x3F00B880 // Базовый адрес для Mailbox в Raspberry PI 2 Model B
+wait_write:
+    ldr r2, [r1, #0x18]       // Читаем Status
+    tst r2, #0x80000000       // Проверяем флаг Full
+    bne wait_write
+    str r0, [r1, #0x20]       // Пишем в Write
 
-/*
-* Branch to the actual main code.
-*/
-b main
+    // 4. Ждем ответа (Read)
+wait_read:
+    ldr r2, [r1, #0x18]       // Читаем Status
+    tst r2, #0x40000000       // Проверяем флаг Empty
+    bne wait_read
+    ldr r0, [r1, #0]          // Читаем ответ
 
-/*
-* This command tells the assembler to put this code with the rest.
-*/
-.section .text
+    // 5. Рисуем градиент
+    ldr r0, =FrameBufferInfo // получаем 
+    ldr r1, [r0, #32] // Сначала получаем ЧИСТЫЙ адрес памяти экрана от GPU
+    teq r1, #0                // Проверяем, не ноль ли (ошибка)
+    beq _start
 
-/*
-* main is what we shall call our main operating system method. It never 
-* returns, and takes no parameters.
-* C++ Signature: void main(void)
-*/
-main:
+    // Для Raspberry Pi 2 (архитектура ARMv7, включен кэш) 
+    // нужно отключить кэширование для указателя экрана дисплея, чтобы изменения сразу отображались.
+    // Используем шинный алиас 0x40000000 (или 0xC0000000 в зависимости от настройки MMU)
+    orr r1, #0x40000000   
 
-/*
-* Set the stack point to 0x8000.
-*/
-	mov sp,#0x8000
+    mov r2, #0                // Y координата
+loop_y:
+    mov r3, #0                // X координата
+loop_x:
+    // Цвет: упакуем RRRRR GGGGGG BBBBB (16 бит)
+    // Пусть градиент зависит от X и Y
+    add r4, r2, r3            // Простое смешивание координат
+    strh r4, [r1]             // Записываем 2 байта в память экрана
+    add r1, #2                // К следующему пикселю
+    
+    add r3, #1
+    cmp r3, #1024
+    bne loop_x
+    
+    add r2, #1
+    cmp r2, #768
+    bne loop_y
 
-/* NEW
-* Setup the screen.
-*/
-	mov r0,#1024
-	mov r1,#768
-	mov r2,#16
-	bl InitialiseFrameBuffer
+stop: b stop
 
-/* NEW
-* Check for a failed frame buffer.
-*/
-	teq r0,#0
-	bne noError$
-		
-	mov r0,#16
-	mov r1,#1
-	bl SetGpioFunction
-
-	mov r0,#16
-	mov r1,#0
-	bl SetGpio
-
-	error$:
-		b error$
-
-	noError$:
-
-	fbInfoAddr .req r4
-	mov fbInfoAddr,r0
-
-/* NEW
-* Set pixels forevermore. 
-*/
-render$:
-	fbAddr .req r3
-	ldr fbAddr,[fbInfoAddr,#32]
-
-/* NEW
-* We will use r0 to keep track of the current colour.
-*/
-	colour .req r0
-	y .req r1
-	mov y,#768
-	drawRow$:
-		x .req r2
-		mov x,#1024
-		drawPixel$:
-			strh colour,[fbAddr]
-			add fbAddr,#2
-			sub x,#1
-			teq x,#0
-			bne drawPixel$
-
-		sub y,#1
-		add colour,#1
-		teq y,#0
-		bne drawRow$
-
-	b render$
-
-	.unreq fbAddr
-	.unreq fbInfoAddr
+.section .data
+.align 4
+FrameBufferInfo:
+    .int 1024  // 0: Ширина физическая
+    .int 768   // 4: Высота физическая
+    .int 1024  // 8: Ширина виртуальная
+    .int 768   // 12: Высота виртуальная
+    .int 0      // 16: GPU заполнит: Pitch (байт в строке)
+    .int 16     // 20: Глубина цвета (16 бит - High Color)
+    .int 0      // 24: X смещение
+    .int 0      // 28: Y смещение
+    .int 0      // 32: GPU заполнит: Указатель на начало памяти экрана
+    .int 0      // 36: GPU заполнит: Размер памяти экрана

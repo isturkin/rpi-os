@@ -3,6 +3,8 @@
 _start:
     // 1. Получаем адрес структуры
     ldr r0, =FrameBufferInfo
+
+    orr r0, #0xC0000000 // добавляем "шинное смещение", чтобы GPU обратился по корректному адресу
     
     // 2. Добавляем номер канала (1 для Framebuffer)
     // Адрес должен быть выровнен по 16 байт, поэтому последние 4 бита свободны
@@ -10,21 +12,23 @@ _start:
     
     // 3. Отправляем в Mailbox (Write)
     ldr r1, =0x3F00B880 // Базовый адрес для Mailbox в Raspberry PI 2 Model B
+    baseMailboxAddress .req r1
 wait_write:
-    ldr r2, [r1, #0x18]       // Читаем Status
+    ldr r2, [baseMailboxAddress, #0x18]       // Читаем Status
     tst r2, #0x80000000       // Проверяем флаг Full
     bne wait_write
-    str r0, [r1, #0x20]       // Пишем в Write
+    str r0, [baseMailboxAddress, #0x20]       // Пишем во Write-регистр
 
     // 4. Ждем ответа (Read)
 wait_read:
-    ldr r2, [r1, #0x18]       // Читаем Status
-    tst r2, #0x40000000       // Проверяем флаг Empty
-    bne wait_read
-    ldr r0, [r1, #0]          // Читаем ответ
+    ldr r2, [baseMailboxAddress, #0x18]       // Читаем Status
+    tst r2, #0x40000000       // Проверяем флаг Empty, если бит выставлен, то Z=0
+    bne wait_read // Если Z=1, то возвращаемся в wait_read
+    ldr r0, [baseMailboxAddress, #0]          // Читаем ответ
 
     // 5. Рисуем градиент
-    ldr r0, =FrameBufferInfo // получаем 
+    ldr r0, =FrameBufferInfo // получаем
+    .unreq baseMailboxAddress
     ldr r1, [r0, #32] // Сначала получаем ЧИСТЫЙ адрес памяти экрана от GPU
     teq r1, #0                // Проверяем, не ноль ли (ошибка)
     beq _start
@@ -33,6 +37,7 @@ wait_read:
     // нужно отключить кэширование для указателя экрана дисплея, чтобы изменения сразу отображались.
     // Используем шинный алиас 0x40000000 (или 0xC0000000 в зависимости от настройки MMU)
     // orr r1, #0x40000000
+    bic r1, r1, #0xC0000000
 
     mov r2, #0                // Y координата
 loop_y:

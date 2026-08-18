@@ -39,25 +39,53 @@ wait_read:
     // orr r1, #0x40000000
     bic r1, r1, #0xC0000000
 
-    mov r2, #0                // Y координата
-loop_y:
-    mov r3, #0                // X координата
-loop_x:
-    // Цвет: упакуем RRRRR GGGGGG BBBBB (16 бит)
-    // Пусть градиент зависит от X и Y
-    add r4, r2, r3            // Простое смешивание координат
-    strh r4, [r1]             // Записываем 2 байта в память экрана
-    add r1, #2                // К следующему пикселю
-    
-    add r3, #1
-    cmp r3, #1024
-    bne loop_x
-    
-    add r2, #1
-    cmp r2, #768
-    bne loop_y
+    bl SetGraphicsAddress
+	
+	lastRandom .req r7
+	lastX .req r8
+	lastY .req r9
+	colour .req r10
+	x .req r5
+	y .req r6
+	mov lastRandom,#0
+	mov lastX,#0
+	mov r9,#0
+	mov r10,#0
+render$:
+	mov r0,lastRandom
+	bl Random
+	mov x,r0
+	bl Random
+	mov y,r0
+	mov lastRandom,r0
 
-stop: b stop
+	mov r0,colour
+	add colour,#1
+	lsl colour,#16
+	lsr colour,#16
+	bl SetForeColour
+		
+	mov r0,lastX
+	mov r1,lastY
+	lsr r2,x,#22
+	lsr r3,y,#22
+
+	cmp r3,#768
+	bhs render$
+	
+	mov lastX,r2
+	mov lastY,r3
+	 
+	bl DrawLine
+
+	b render$
+
+	.unreq x
+	.unreq y
+	.unreq lastRandom
+	.unreq lastX
+	.unreq lastY
+	.unreq colour
 
 .section .data
 .balign 16 // выравниваем по 16 байтам
